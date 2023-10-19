@@ -46,7 +46,7 @@ int main() {
     for(int i = 0; i < NUMFILES; i++) {
         files[i].fp = filepaths[i];
         importFile(&files[i]);
-        printf("%s\n",files[i].data);
+        // printf("%s\n",files[i].data);
     }
     //Load special characters and stop words into dfile structs
     importFile(&specialCharacters);
@@ -54,13 +54,16 @@ int main() {
 
     //Do special character removal here
 
-    //Convert the file text string into a list of strings split by ' ' and print each string (for debugging)
+    //Convert the file text string into a list of strings split by ' ' or \n (depending which is present in the file) 
+    //and print each string (for debugging)
     for(int i = 0; i < NUMFILES; i++) {
         tokenizeFiles(&files[i]);
-        for(int j = 0; files[i].tokens[j] != NULL; j++) {
-            printf("%s\n", files[i].tokens[j]);
-        }
+        // for(int j = 0; files[i].tokens[j] != NULL; j++) {
+        //     printf("%s\n", files[i].tokens[j]);
+        // }
     }
+    tokenizeFiles(&specialCharacters);
+    tokenizeFiles(&stopWords);
 
     //Do stop word removal here and so on
 
