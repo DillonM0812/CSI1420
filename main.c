@@ -1,3 +1,18 @@
+/**
+ * CSI1420-43271 Final Project
+ * Written by Dillon Myatt, Nicholas Sakowski, Samuel Purrenhage, Michael Medulla, Ashton Rains
+ * 
+ * This program takes in a set of text files and removes special characters and stop words from the files, 
+ * sorts the words, stores them in a file, then computes the frequency and weight of each word in each file.
+ * 
+ * File import and conversion to indexed tokens is completed by Dillon
+ * Stop word removal is completed by Ashton
+ * Special character removal is completed by Michael
+ * Sorting is completed by Nicholas
+ * File output is completed by Sam
+ * Freqency and Weight calculation is completed by Sam
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
