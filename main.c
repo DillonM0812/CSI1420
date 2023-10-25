@@ -46,7 +46,6 @@ int main() {
     for(int i = 0; i < NUMFILES; i++) {
         files[i].fp = filepaths[i];
         importFile(&files[i]);
-        // printf("%s\n",files[i].data);
     }
     //Load special characters and stop words into dfile structs
     importFile(&specialCharacters);
@@ -60,9 +59,6 @@ int main() {
     //and print each string (for debugging)
     for(int i = 0; i < NUMFILES; i++) {
         tokenizeFiles(&files[i]);
-        // for(int j = 0; files[i].tokens[j] != NULL; j++) {
-        //     printf("%s\n", files[i].tokens[j]);
-        // }
     }
 
     //Do stop word removal here and so on
@@ -137,14 +133,7 @@ int tokenizeFiles(dfile *file) {
 
     //Check to see if the string contains newlines, determining if the string is specialCharacters, stopCharacters, 
     //or one of the d1-d4 files
-    bool found = false;
-    for (int i = 0; temp[i] != '\0'; i++) {
-        if (temp[i] == '\n') {
-            found = true;
-            break;
-        }
-    }
-    char sep = found ? '\n' : ' ';
+    char sep = ' ';
 
     //Tokenize the string by the separator found above
     char *token = strtok(temp, &sep);
@@ -167,8 +156,15 @@ int tokenizeFiles(dfile *file) {
             free(temp);
             return 1;
         }
+        retVal[size] = (char *)malloc(strlen(token) + 1);
+        if(retVal[size] == NULL){
+            perror("Failed to allocate memory for retVal[size]");
+            free(temp);
+            return 1;
+        }
         //Save the token to the array, increment the size counter, and get the next token
-        retVal[size] = token;
+        // retVal[size] = token;
+        strcpy(retVal[size], token);
         size++;
         token = strtok(NULL, &sep);
     }
