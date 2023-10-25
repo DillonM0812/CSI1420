@@ -50,7 +50,9 @@ int main() {
     }
     //Load special characters and stop words into dfile structs
     importFile(&specialCharacters);
+    tokenizeFiles(&specialCharacters);
     importFile(&stopWords);
+    tokenizeFiles(&stopWords);
 
     //Do special character removal here
 
@@ -62,8 +64,6 @@ int main() {
         //     printf("%s\n", files[i].tokens[j]);
         // }
     }
-    tokenizeFiles(&specialCharacters);
-    tokenizeFiles(&stopWords);
 
     //Do stop word removal here and so on
 
