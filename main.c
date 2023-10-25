@@ -78,7 +78,21 @@ int main() {
     return 0;
 }
 
+
+/**
+ * @brief takes a dfile struct and uses the file path stored in the struct to open the file and read the data into the struct
+ * 
+ * @param file pointer to a dfile struct
+ * 
+ * @return 0 on success, 1 on failure
+*/
 int importFile(dfile *file) {
+    //Verify that the file exists and has a file path
+    if(file == NULL || file->fp == NULL) {
+        perror("Error: no file path given in struct\n");
+        return 1;
+    }
+
     //Open the file
     FILE *currentFile = fopen(file->fp, "rb");
     //Check to make sure file was opened, return error if not
@@ -126,6 +140,14 @@ int importFile(dfile *file) {
     return 0;
 }
 
+/**
+ * @brief takes a dfile struct with a populated data field and converts the data field
+ * into an array of strings delimited by ' '
+ * 
+ * @param file pointer to a dfile struct
+ * 
+ * @return 0 on success, 1 on failure
+*/
 int tokenizeFiles(dfile *file) {
     //Verify that the file exists and has a data string
     if (file == NULL || file->data == NULL) {
