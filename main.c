@@ -61,9 +61,19 @@ int main() {
         tokenizeFiles(&files[i]);
     }
 
-    //Do stop word removal here and so on
+    //Do stop word removal, sorting, saving to file, etc.
 
     printf("Reached end of code\n");
+
+    //Memory cleanup, all code goes above this
+    for(int i = 0; i < NUMFILES; i++) {
+        free(files[i].data);
+        free(files[i].tokens);
+    }
+    free(specialCharacters.data);
+    free(specialCharacters.tokens);
+    free(stopWords.data);
+    free(stopWords.tokens);
     
     return 0;
 }
