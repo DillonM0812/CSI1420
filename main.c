@@ -106,7 +106,7 @@ void removeSpecialChar(char data)
 	for (int i = 0, j; data[i] != '\0'; ++i)
 	{
 		
-		while (!(data[i] >= 'a' && data[i] <= 'z') && !(data[i] >= 'A' && data[i] <= 'Z') && !(data[i] == '\0'))
+		while (!(data[i] >= 'a' && data[i] <= 'z') && !(data[i] >= 'A' && data[i] <= 'Z') && !(data[i] == '\0') && !(data[i] == ' '))
 		{
 			for (j = i; data[j] != '\0'; ++j)
 				
