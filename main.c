@@ -73,7 +73,7 @@ int main() {
     for(int i = 0; i <NUMFILES; i++)
 	{
 		
-		removeSpecialChar(files[i]->data);
+		removeSpecialChar(files[i].data);
 		
 	}
 
@@ -100,7 +100,7 @@ int main() {
     return 0;
 }
 
-void removeSpecialChar(char data)
+void removeSpecialChar(char *data)
 {
 	
 	for (int i = 0, j; data[i] != '\0'; ++i)
