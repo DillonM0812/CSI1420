@@ -28,6 +28,7 @@ typedef struct {
 
 int importFile(dfile *file);
 int tokenizeFiles(dfile *file);
+void removeSpecialChar(char data);
 
 int main() {
     //Declare initial data arrays to hold file paths and dfiles containing text file data
@@ -69,6 +70,12 @@ int main() {
     tokenizeFiles(&stopWords);
 
     //Do special character removal here
+    for(int i = 0; i <NUMFILES; i++)
+	{
+		
+		removeSpecialChar(files[i]->data);
+		
+	}
 
     //Convert the file text string into a list of strings split by ' ' or \n (depending which is present in the file) 
     //and print each string (for debugging)
@@ -91,6 +98,25 @@ int main() {
     free(stopWords.tokens);
     
     return 0;
+}
+
+void removeSpecialChar(char data)
+{
+	
+	for (int i = 0, j; data[i] != '\0'; ++i)
+	{
+		
+		while (!(data[i] >= 'a' && data[i] <= 'z') && !(data[i] >= 'A' && data[i] <= 'Z') && !(data[i] == '\0'))
+		{
+			for (j = i; data[j] != '\0'; ++j)
+				
+				data[j] = data [j + 1];
+			
+			data[j] = '\0';
+		}
+		
+	}
+	
 }
 
 
