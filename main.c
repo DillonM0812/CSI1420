@@ -69,7 +69,6 @@ int main() {
     importFile(&stopWords);
     tokenizeFiles(&stopWords);
 
-    //Do special character removal here
     for(int i = 0; i <NUMFILES; i++)
 	{
 		
@@ -85,8 +84,6 @@ int main() {
 
     //Do stop word removal, sorting, saving to file, etc.
 
-    printf("Reached end of code\n");
-
     //Memory cleanup, all code goes above this
     for(int i = 0; i < NUMFILES; i++) {
         free(files[i].data);
@@ -96,6 +93,8 @@ int main() {
     free(specialCharacters.tokens);
     free(stopWords.data);
     free(stopWords.tokens);
+
+    printf("Reached end of code\n");
     
     return 0;
 }
