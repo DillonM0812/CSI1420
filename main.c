@@ -15,7 +15,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 
 #define NUMFILES 4
@@ -69,12 +68,9 @@ int main() {
     importFile(&stopWords);
     tokenizeFiles(&stopWords);
 
-    for(int i = 0; i <NUMFILES; i++)
-	{
-		
-		removeSpecialChar(files[i].data);
-		
-	}
+    for(int i = 0; i <NUMFILES; i++) {
+	removeSpecialChar(files[i].data);
+    }
 
     //Convert the file text string into a list of strings split by ' ' or \n (depending which is present in the file) 
     //and print each string (for debugging)
@@ -127,13 +123,13 @@ void removeSpecialChar(char *data)
  * @return 0 on success, 1 on failure
 */
 int importFile(dfile *file) {
-    //Verify that the file exists and has a file path
+    //Verify that the file exists and has a file path. Return error code to prevent segmentation fault
     if(file == NULL || file->fp == NULL) {
         perror("Error: no file path given in struct\n");
         return 1;
     }
 
-    //Open the file
+    //Open the file in binary mode
     FILE *currentFile = fopen(file->fp, "rb");
     //Check to make sure file was opened, return error if not
     if (currentFile == NULL) {
@@ -141,19 +137,23 @@ int importFile(dfile *file) {
         return 1;
     }
 
-    //Find total size of the file and seek beginning character
+    //Find total size of the file
+    //Move cursor to end of file
     fseek(currentFile, 0, SEEK_END);
+    //Use ftell to find what character number the cursor is at, store as an integer
     int size = ftell(currentFile);
+    //Move cursor to beginning of file in preparation for reading
     fseek(currentFile, 0, SEEK_SET);
 
-    //Check to make sure file size was found, return error if not
+    //Check to make sure file size was found (prevent reading 0 length files) and return error if reading fails.
     if(size == -1) {
         perror("Error getting file size\n");
         fclose(currentFile);
         return 1;
     }
 
-    //Allocate memory for the file, check that memory was allocated
+    //Allocate memory for the file and check that memory was allocated. Byte number for malloc is
+    //(size+1) because each character is 1 byte and we need an extra space for the EOF character
     char *buffer = (char*)malloc(size + 1);
     if(buffer == NULL) {
         perror("Error allocating memory for file\n");
@@ -161,7 +161,8 @@ int importFile(dfile *file) {
         return 1;
     }
     
-    //Read Data using fread, check that file was read properly
+    //Read Data using fread, check that file was read properly by comparing the number of bytes read to the size
+    //of the file that we found earlier. Free memory, close file, and return an error is a mismatch is found
     size_t readBytes = fread(buffer, 1, size, currentFile);
     if(readBytes != size) {
         perror("Error reading file\n");
@@ -173,7 +174,7 @@ int importFile(dfile *file) {
     //close files
     fclose(currentFile);
     
-    //Save data to dfile struct
+    //Save data to dfile struct by setting pointers equal to each other
     file->data = buffer;
 
     //Return success code
@@ -189,7 +190,7 @@ int importFile(dfile *file) {
  * @return 0 on success, 1 on failure
 */
 int tokenizeFiles(dfile *file) {
-    //Verify that the file exists and has a data string
+    //Verify that the file exists and has a data string, return error if either does not exist
     if (file == NULL || file->data == NULL) {
         perror("Error: file is null or file data is null\n");
         return 1;
@@ -203,11 +204,11 @@ int tokenizeFiles(dfile *file) {
     }
     strcpy(temp, file->data);
 
-    //Check to see if the string contains newlines, determining if the string is specialCharacters, stopCharacters, 
-    //or one of the d1-d4 files
+    //Define the delimiter of the file. Our files were copied from the assignment document such
+	//that there is no newlines, the delimiter will always be space
     char sep = ' ';
 
-    //Tokenize the string by the separator found above
+    //Use strtok out of the standard library to find the first word and check if it was found
     char *token = strtok(temp, &sep);
     if (token == NULL) {
         perror("Failed to tokenize string");
@@ -219,25 +220,27 @@ int tokenizeFiles(dfile *file) {
     char **retVal = NULL;
     int size = 0;
 
-    //Loop through the tokens until a NULL token is found
+    //Loop through the tokens until a NULL token is found, indicating we have reached the end of the tokens
     while (token != NULL) {
-        //Add space to retVal for the next token and check that the memory was allocated
+        //Allocate space to retVal for the next token and check that the memory was allocated
         retVal = (char **)realloc(retVal, sizeof(char *) * (size + 1));
         if (retVal == NULL) {
             perror("Failed to allocate memory for retVal");
             free(temp);
             return 1;
         }
+		//Allocate memory inside the newly created space in retVal to hold the token, check if memory was allocated properly
         retVal[size] = (char *)malloc(strlen(token) + 1);
         if(retVal[size] == NULL){
             perror("Failed to allocate memory for retVal[size]");
             free(temp);
             return 1;
         }
-        //Save the token to the array, increment the size counter, and get the next token
-        // retVal[size] = token;
+        //Save the token to the array
         strcpy(retVal[size], token);
+		//Increment array size
         size++;
+		//Find the next token by using strtok on a null pointer
         token = strtok(NULL, &sep);
     }
     //NULL terminate the array
