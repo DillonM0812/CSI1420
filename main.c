@@ -27,7 +27,7 @@ typedef struct {
 
 int importFile(dfile *file);
 int tokenizeFiles(dfile *file);
-void removeSpecialChar(char data);
+void removeSpecialChar(char *data);
 
 int main() {
     //Declare initial data arrays to hold file paths and dfiles containing text file data
@@ -70,7 +70,7 @@ int main() {
 
 	//loops through data files and runs the function on each file
     for(int i = 0; i <NUMFILES; i++) {
-	removeSpecialChar(files[i].data);
+	    removeSpecialChar(files[i].data);
     }
 
     //Convert the file text string into a list of strings split by ' ' or \n (depending which is present in the file) 
