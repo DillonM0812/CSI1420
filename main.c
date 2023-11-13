@@ -68,6 +68,7 @@ int main() {
     importFile(&stopWords);
     tokenizeFiles(&stopWords);
 
+	//loops through data files and runs the function on each file
     for(int i = 0; i <NUMFILES; i++) {
 	removeSpecialChar(files[i].data);
     }
@@ -94,13 +95,13 @@ int main() {
     
     return 0;
 }
-
+//function for removing special characters
 void removeSpecialChar(char *data)
 {
-	
+	//looping through string
 	for (int i = 0, j; data[i] != '\0'; ++i)
 	{
-		
+		//removes all characters that aren't the alphabet, null, or space
 		while (!(data[i] >= 'a' && data[i] <= 'z') && !(data[i] >= 'A' && data[i] <= 'Z') && !(data[i] == '\0') && !(data[i] == ' '))
 		{
 			for (j = i; data[j] != '\0'; ++j)
