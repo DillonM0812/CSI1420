@@ -226,10 +226,10 @@ int tokenizeFiles(dfile *file) {
 
     //Define the delimiter of the file. Our files were copied from the assignment document such
 	//that there is no newlines, the delimiter will always be space
-    char sep = ' ';
+    const char sep[] = " ";
 
     //Use strtok out of the standard library to find the first word and check if it was found
-    char *token = strtok(temp, &sep);
+    char *token = strtok(temp, sep);
     if (token == NULL) {
         perror("Failed to tokenize string");
         free(temp);
@@ -261,7 +261,7 @@ int tokenizeFiles(dfile *file) {
 		//Increment array size
         size++;
 		//Find the next token by using strtok on a null pointer
-        token = strtok(NULL, &sep);
+        token = strtok(NULL, sep);
     }
     //NULL terminate the array
     retVal = (char **)realloc(retVal, sizeof(char *) * (size + 1));
