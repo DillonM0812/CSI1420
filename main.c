@@ -28,6 +28,41 @@ typedef struct {
 int importFile(dfile *file);
 int tokenizeFiles(dfile *file);
 void removeSpecialChar(char *data);
+void StopWords(){
+	
+	FILE *words;
+	int i = 1;
+	int c = 0;
+	words = fopen("stopwords.txt", "r");
+	char wordArray[1000][1000];
+	while(i > 0){
+		
+		i = fscanf(words, "%s", wordArray[c]);
+		c++;
+		
+	}
+	fclose(words);
+	word[c] = NULL;
+	
+}
+void wordDelete(char *arr, int index){
+	
+	int f = 0;
+	int r;
+	
+	for(f = 0; arr[f] != NULL, f++){
+		
+		if (f == index){
+			
+			for(r = index; arr[r+1] != NULL; r++){
+				
+				arr[r] = arr[r+1];
+			
+			}	
+		}	
+	}
+}
+
 
 int main() {
     //Declare initial data arrays to hold file paths and dfiles containing text file data
@@ -80,6 +115,7 @@ int main() {
     }
 
     //Do stop word removal, sorting, saving to file, etc.
+	
 
 	//This section is for setting up the tokenized file string array
 	//printf("Test. Start of tokized file writing.\n");
