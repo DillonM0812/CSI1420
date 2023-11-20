@@ -82,20 +82,26 @@ int main() {
     //Do stop word removal, sorting, saving to file, etc.
 
 	//This section is for setting up the tokenized file string array
-	printf("Test. Start of tokized file writing.\n");
+	//printf("Test. Start of tokized file writing.\n");
 	FILE *tf;
 	char *Tfilepaths[NUMFILES];
-		Tfilepaths[0] = "TokenizedFile1.txt";
-		Tfilepaths[1] = "TokenizedFile2.txt";
-		Tfilepaths[2] = "TokenizedFile3.txt";
-		Tfilepaths[3] = "TokenizedFile4.txt";
+		Tfilepaths[0] = "TokenizedFile1.csv";
+		Tfilepaths[1] = "TokenizedFile2.csv";
+		Tfilepaths[2] = "TokenizedFile3.csv";
+		Tfilepaths[3] = "TokenizedFile4.csv";
 	
 	//this for loop will open a file for writing, add the tokenized string to the file, and then close that file.
 	for(int i = 0; i < NUMFILES; i++)
 	{
-		printf("Begin opening of file for writing.\n");
+		//printf("Begin opening of file for writing.\n");
 		tf = fopen(Tfilepaths[i], "w");
-		fprintf(tf, "%s", files[i].tokens);
+		//This nested loop will print each individual word from the current file sequentially.
+		//It will end when it reaches NULL, which has been inserted at the end of files.tokens.
+		for (int j = 0; files[i].tokens[j] != NULL; j++)
+		{
+			fprintf(tf, "%s,\n", files[i].tokens[j]);
+		}
+		//This will close the currently opened file to keep things neet.
 		fclose(tf);
 		
 	}
