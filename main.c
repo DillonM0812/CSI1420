@@ -10,7 +10,7 @@
  * Special character removal is completed by Michael
  * Sorting is completed by Nicholas
  * File output is completed by Sam
- * Freqency and Weight calculation is completed by Sam
+ * Freqency and Weight calculation is completed by Dillon
 */
 
 #include <stdio.h>
