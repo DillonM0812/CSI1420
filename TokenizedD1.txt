@@ -67,7 +67,6 @@ quick
 recognition
 recognize
 relationships
-s
 scale
 science
 size
@@ -84,5 +83,4 @@ thrust
 time
 underpinnings
 valuable
-x
 years

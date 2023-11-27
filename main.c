@@ -34,6 +34,8 @@ void wordDelete(dfile *file, int index);
 void alpha_sort(char *words[]);
 int sortString(const void *str1, const void *str2);
 int arrayLen(char **arr);
+void weightCalculator(dfile *file);
+char* changeFileExtension(const char* inputFileName, const char* newExtension);
 
 int main() {
     //Declare initial data arrays to hold file paths and dfiles containing text file data
@@ -116,6 +118,10 @@ int main() {
 		fclose(tf);
 
 	}
+
+    for(int i = 0; i < NUMFILES; i++) {
+        weightCalculator(&files[i]);
+    }
 	
     //Memory cleanup, all code goes above this
     /*
@@ -447,5 +453,110 @@ int arrayLen(char **array) {
 }
 
 void weightCalculator(dfile *file) {
+    //Initialize some variables so we can find the word with the highest weight in the file,
+    int highestCount = 0;
+    int count = 1;
+    char *currentWord = file->tokens[0];
 
+    //Loop through ever element in tokens
+    for(int i = 1; file->tokens[i] != NULL; i++) {
+        //Compare the current word to the next word, if they match then increment the count
+        if(strcmp(currentWord, file->tokens[i]) == 0) {
+            count++;
+        } else {
+            //When we detect a new word, check if the count is higher than the highest count we have found so far
+            if(count > highestCount) {
+                //If we found a new highest count, save this value for later
+                highestCount = count;
+            }
+            //Reset variables for the new word we found
+            count = 1;
+            currentWord = file->tokens[i];
+        }
+    }
+
+    //Do some string manipulation to get the output file name without having to manually type them in.
+    //Start by allocating memory and checking to make sure it succeeded
+    char *outputFile = (char*)calloc(6, sizeof(char));
+    if(outputFile == NULL) {
+        perror("Failed to allocate memory for output file");
+        return;
+    }
+    //Use a helper method to change the file extension from .txt to .csv using some string manipulation
+    outputFile = changeFileExtension(file->fp, ".csv");
+
+    //Open the output file for writing and check that it opened properly
+    FILE *fp = fopen(outputFile, "wb");
+    if(fp == NULL) {
+        perror("Failed to open output file");
+        return;
+    }
+
+    //Reset the first word in the file and begin counting it
+    currentWord = file->tokens[0];
+    count = 1;
+
+    //Print a header to the file
+    fprintf(fp, "Word,Frequency,Weight\n");
+
+    //Loop through every element in the tokens array
+    for(int i = 0; file->tokens[i] != NULL; i++) {
+        //Count the number of times the current word appears in the file
+        if(strcmp(currentWord, file->tokens[i]) == 0) {
+            count++;
+        } else {
+            //When we find a new word, print the old word, it's frequency, and it's weight to the file in .csv format
+            fprintf(fp, "%s,%d,%f\n", currentWord, count, (float)count/highestCount);
+            //Reset variables for the new word we found
+            count = 1;
+            currentWord = file->tokens[i];
+        }
+    }
+    //Close the file and tidy up memory
+    fclose(fp);
+    free(currentWord);
+}
+
+//Do some string manipulation to change the file extension from .txt to .csv, helper method for output file creation
+char* changeFileExtension(const char* inputFileName, const char* newExtension) {
+    // Find the position of the dot (.), determining where the file extension begins. We don't have
+    //to worry about multiple periods because any more than 1 is an invalid file extension
+    char* dotPosition = strrchr(inputFileName, '.');
+
+    //Make sure a file extension exists
+    if (dotPosition != NULL) {
+        // Calculate the length of the prefix, excluding the current extension
+        size_t prefixLength = dotPosition - inputFileName;
+
+        // Calculate the length of the new string, including the new extension and null terminator.
+        size_t newLength = prefixLength + strlen(newExtension) + 1;
+
+        // Allocate memory for the new string
+        char* newFileName = (char*)calloc(newLength, sizeof(char));
+
+        // Copy the file name, before the extension begins
+        strncpy(newFileName, inputFileName, prefixLength);
+
+        // Append the new extension and the null terminator
+        strcat(newFileName, newExtension);
+
+        return newFileName;
+
+    } else {
+        // If no dot is found, append the new extension to the end of the original string
+        size_t inputLength = strlen(inputFileName);
+        size_t newLength = inputLength + strlen(newExtension) + 1;
+
+        // Allocate memory for the new string
+        char* newFileName = (char*)calloc(newLength, sizeof(char));
+
+        // Copy the original file name
+        strcpy(newFileName, inputFileName);
+
+        // Append the new extension and the null terminator
+        strcat(newFileName, newExtension);
+
+        return newFileName;
+
+    }
 }
