@@ -26,6 +26,7 @@ typedef struct {
     char **tokens;      //File data in list of strings delimited by ' '
 } dfile;                //Struct is named dfile so it can be used later in code similar to a normal data type
 
+void init(dfile *files, dfile *specialCharacters, dfile *stopWords);
 int importFile(dfile *file);
 int tokenizeFiles(dfile *file);
 void removeSpecialChar(dfile *file);
@@ -39,63 +40,65 @@ char* changeFileExtension(const char* inputFileName, const char* newExtension);
 
 int main() {
     //Declare initial data arrays to hold file paths and dfiles containing text file data
-    char *filepaths[NUMFILES];
     dfile files[NUMFILES];
     dfile specialCharacters;
     dfile stopWords;
 
-    //Initialize filepaths array
-    filepaths[0] = "d1.txt";
-    filepaths[1] = "d2.txt";
-    filepaths[2] = "d3.txt";
-    filepaths[3] = "d4.txt";
+    init(files, &specialCharacters, &stopWords);
 
-    //Set all members of files to a known state
+    /*
+     * Read each file in string form into each of the file structs
+     *
+     * File import and tokenize functions written by Dillon
+     */
     for(int i = 0; i < NUMFILES; i++) {
-        files[i].fp = NULL;
-        files[i].data = NULL;
-        files[i].tokens = NULL;
-    }
-
-    //Initialize special characters struct and stopwords struct
-    specialCharacters.fp = "specialcharacters.txt";
-    specialCharacters.data = NULL;
-    specialCharacters.tokens = NULL;
-    stopWords.fp = "stopwords.txt";
-    stopWords.data = NULL;
-    stopWords.tokens = NULL;
-
-    //Import each file into a dfile struct
-    for(int i = 0; i < NUMFILES; i++) {
-        files[i].fp = filepaths[i];
         importFile(&files[i]);
     }
-    //Load special characters and stop words into dfile structs
-    importFile(&specialCharacters);
-    tokenizeFiles(&specialCharacters);
+    //Load the stop words into a struct and tokenize the words
     importFile(&stopWords);
     tokenizeFiles(&stopWords);
 
-	//loops through data files and runs the function on each file
+    /*
+	 * Loops through data files and runs the function on each file
+     *
+     * Function written by Michael
+     */
     for(int i = 0; i <NUMFILES; i++) {
 	    removeSpecialChar(&files[i]);
     }
 
-    //Convert the file text string into a list of strings delimited by ' '
+    /*
+     * Take each data string after being cleaned of special characters and turn it into a list of tokens
+     *
+     * Function written by Dillon
+     */
     for(int i = 0; i < NUMFILES; i++) {
         tokenizeFiles(&files[i]);
     }
 
+    /*
+     * Take each array of tokens and remove stop words from the array
+     *
+     * Function written by Ashton
+     */
     for(int i = 0; i < NUMFILES; i++) {
         removeStopWords(&files[i],&stopWords);
     }
 
+/*
+     * Sort each array of tokens alphabetically
+     *
+     * Function written by Nicholas
+     */
     for(int i = 0; i < NUMFILES; i++) {
         alpha_sort(files[i].tokens);
     }
 
-	//This section is for setting up the tokenized file string array
-	//printf("Test. Start of tokized file writing.\n");
+	/* This section is for printing the tokenized file string array to a file to fulfill the requirement to provide
+	 * D#Tokenized.txt for Moodle submission
+	 *
+	 * Code written by Sam
+	 */
 	FILE *tf;
 	char *Tfilepaths[NUMFILES];
 		Tfilepaths[0] = "TokenizedD1.txt";
@@ -116,185 +119,48 @@ int main() {
 		}
 		//This will close the currently opened file to keep things neat.
 		fclose(tf);
-
 	}
 
+    /*
+     * Calculate the frequency and weight of each word in each file and output the results to a .csv file
+     * for ease of viewing
+     *
+     * Function written by Dillon
+     */
     for(int i = 0; i < NUMFILES; i++) {
         weightCalculator(&files[i]);
     }
-	
-    //Memory cleanup, all code goes above this
-    /*
-     * Dillon note- something is preventing free() from working here in my IDE, so I'm just not going to do this.
-     * It works fine by running it in the terminal, windows/linux will clean up the memory when the code ends in 10 lines
-     * and I don't care to debug my IDE to make this work.
-     *
-     * Uncomment these lines before compiling if you want this "good practices" step to run in your code
-     */
-    for(int i = 0; i < NUMFILES; i++) {
-        free(files[i].data);
-        free(files[i].tokens);
-    }
-    free(specialCharacters.data);
-    free(specialCharacters.tokens);
-    free(stopWords.data);
-    free(stopWords.tokens);
 
     printf("Reached end of code\n");
     
     return 0;
 }
 
-void alpha_sort(char **words) {
-    //Moved calling arrayLen to inside alpha sort instead of sending it as an argument
-    int count = arrayLen(words);
-    //Use qsort from stdlib. this is explained in the textbook or in
-    //chapter 4.10 of the 1983 second edition of K&R "The C Programming Language" book. The course never covered sorting
-    //despite it being a final project requirement, so we are taking the easy way out and using textbook code
-    qsort(words, count, sizeof(*words), sortString);
-}
-
-//Helper method for alpha_sort, more content not covered in class so parts this was also pulled from the K&R book
-//and was cobbled together here
-int sortString(const void *str1, const void *str2) {
-    //We are dereferencing the pointers to string 1 and string 2. We need to do this because we are actively sorting
-    //These strings and moving their positions around, so if we do not dereference the strings first then it is possible
-    //that our comparison will not execute properly
-    const char *const *pp1 = str1;
-    const char *const *pp2 = str2;
-    //Use strcmp, a stdlib function. This lexicographically compares the two dereferenced strings and gives a positive/negative/0
-    //return value based on which string comes first alphabetically. We need to use this to differentiate between "analyze" and
-    //"artificial" (in D1.txt) without writing our own complicated, long, and horrible function to do the same comparison
-    return strcmp(*pp1, *pp2);
-}
-
-//Added arguments to the file we are removing words from and the pre-existing stopwords struct
-//so we do not duplicate processes or memory that we have already completed
-void removeStopWords(dfile *file, dfile *stopWords) {
-    int numDeleted = 0;
-    int len = arrayLen(file->tokens);
-    //Declare this locally since we don't need it after the for loop, also use "j" since i,j,k is
-    //the typical for loop variables
-//	int c = 0;
-    //Removed opening of stopwords.txt, we already have this loaded into memory
-//	words = fopen("stopwords.txt", "r");
-    //Removed declaration of wordArray, we are modifying an array that already exists.
-    /*
-     * Declaring a 1000x1000 array to hold our words is also very very inefficient. I believe the largest number of
-     * words we have is 162 and the longest individual word is ~20 characters, anyways this is irrelevant because the
-     * data that I read into memory in the beginning of the program is flexible in terms of size since it uses
-     * malloc/realloc and I used the exact amount of memory that we need.
-     *
-     * See tokenizeFiles() for an example of dynamic memory allocation and only allocating the memory that we actually need
-     */
-//	char wordArray[1000][1000];
-    //Changed while loop to for loop since it makes more sense to use a for loop for an incrementing value
-//	while(i > 0){
-    /*
-     * The tokens field in each file struct is an N length array that contains M length strings in each element.
-     * This has been prepared before this function executes in main so we do not need to reload or reprocess these files.
-     *
-     * We will compare each element of the d#.txt tokens array with the stopWords tokens array using strcmp which returns
-     * 0 if the tokens match, when we find a match we will execute the array deletion function to remove the word we do not
-     * want.
-     */
-    for(int i = 0; file->tokens[i] != NULL; i++) {
-        //Not sure what was happening after the while loop. Looked like some kind of file read operation, which we don't
-        //need to do, followed by ?
-
-        //We have to present in 3 days so I'm going to drop this in here. It is likely similar to something that
-        //Ashton would have come up with, but we have 1 more meeting before the presentation and everyone has been pretty
-        //busy so we need to get some functional code together
-        for(int j = 0; stopWords->tokens[j] != NULL; j++) {
-            if(strcmp(file->tokens[i], stopWords->tokens[j]) == 0) {
-                //When we have found a word in the d#.txt file and stopwords, perform an array deletion
-                wordDelete(file, i);
-                //Keep a record of how many words we deleted so we can resize the array later
-                numDeleted++;
-                //We deleted the word that we just checked, so move back by one so we can check the word that filled it's
-                //place
-                i--;
-                //Break out of the loop once we find a match since we do not need to check the rest of the stopwords
-                break;
-            }
-        }
-
-        //We do not need to read from a file so commenting this out. This is the old contents of the while loop
-//		i = fscanf(words, "%s", wordArray[c]);
-//		c++;
-
-	}
-    //removed closing words file since we never opened it
-//	fclose(words);
-    //wordArray no longer exists, this was the old "NULL terminate the words array" line that we talked about
-//	wordArray[c] = NULL;
-    //Resize the file tokens array for memory optimization using null pointers.
-    file->tokens = (char**)realloc(file->tokens, (len-numDeleted+1)*sizeof(char*));
-    if(file->tokens == NULL) {
-        perror("Failed to allocate memory");
-        return;
+void init(dfile files[], dfile *specialCharacters, dfile *stopWords) {
+    for(int i = 0; i < NUMFILES; i++) {
+        files[i].fp = NULL;
+        files[i].data = NULL;
+        files[i].tokens = NULL;
     }
-    //NULL terminate the words/tokens array
-    file->tokens[len-numDeleted] = NULL;
+    files[0].fp = "d1.txt";
+    files[1].fp = "d2.txt";
+    files[2].fp = "d3.txt";
+    files[3].fp = "d4.txt";
+    specialCharacters->fp = "specialcharacters.txt";
+    specialCharacters->data = NULL;
+    specialCharacters->tokens = NULL;
+    stopWords->fp = "stopwords.txt";
+    stopWords->data = NULL;
+    stopWords->tokens = NULL;
+
+    return;
 }
-
-void wordDelete(dfile *file, int index){
-    //We don't need to initialize this twice, we don't need i outside the for loop so limit it's scope to the loop.
-    //also use i in the for loop since it is common practice
-//	int f = 0;
-    //Find the length of the array before performing a deletion
-	int len = arrayLen(file->tokens);
-
-    //Make sure we are not trying to do something nonsensical
-    if(index >= len && index < 0) {
-        perror("Attempting to delete word out of bounds");
-        return;
-    }
-
-    //This is effectively the same algorithm that the professor used in lecture to delete
-    //elements from an array, except we are using a null pointer/dynamic allocation array instead of a normal
-    //"int arr[10];" style array. In reality, nothing changes. See chapter 11 (possibly 12 too) powerpoint and course material
-	for(int i = index; file->tokens[i] != NULL; i++) {
-        file->tokens[i] = file->tokens[i+1];
-	}
-}
-
-//function for removing special characters
-void removeSpecialChar(dfile *file)
-{
-    int i;
-//    int j;
-	//looping through string
-	for (i = 0; file->data[i] != '\0'; ++i)
-	{
-		//removes all characters that aren't the alphabet, null, or space
-//		while (!(data[i] >= 'a' && data[i] <= 'z') && !(data[i] >= 'A' && data[i] <= 'Z') && !(data[i] == '\0') && !(data[i] == ' '))
-//		{
-//			for (j = i; data[j] != '\0'; ++j)
-//
-////				data[j] = data [j + 1];
-//                data[j] = ' ';
-//
-//			data[j] = '\0';
-//		}
-        //The while loop and nested for loop in the previous lines can be simplified to the following:
-        //isalpha() does the job of the while loop, it returns true for any alphabetical character. We also check for
-        //space so we don't do redundant replacements. More than 1 consecutive space will be removed in tokenizeFiles()
-        //So we won't worry about that here
-        if(!isalpha((unsigned char)file->data[i]) && file->data[i] != ' ') {
-            file->data[i] = ' ';
-        }
-		
-	}
-	
-}
-
 
 /**
  * @brief takes a dfile struct and uses the file path stored in the struct to open the file and read the data into the struct
- * 
+ *
  * @param file pointer to a dfile struct
- * 
+ *
  * @return 0 on success, 1 on failure
 */
 int importFile(dfile *file) {
@@ -329,15 +195,17 @@ int importFile(dfile *file) {
 
     //Allocate memory for the file and check that memory was allocated. Byte number for malloc is
     //(size+1) because each character is 1 byte and we need an extra space for the EOF character
-    char *buffer = (char*)malloc(size + 1);
+    char *buffer = (char*)calloc(size + 1, sizeof(char));
     if(buffer == NULL) {
         perror("Error allocating memory for file\n");
         fclose(currentFile);
         return 1;
     }
-    
+
     //Read Data using fread, check that file was read properly by comparing the number of bytes read to the size
     //of the file that we found earlier. Free memory, close file, and return an error is a mismatch is found
+
+    //We are using size_t instead of int because fread returns a size_t value, also size_t is common practice
     size_t readBytes = fread(buffer, 1, size, currentFile);
     if(readBytes != size) {
         perror("Error reading file\n");
@@ -364,9 +232,9 @@ int importFile(dfile *file) {
 /**
  * @brief takes a dfile struct with a populated data field and converts the data field
  * into an array of strings delimited by ' '
- * 
+ *
  * @param file pointer to a dfile struct
- * 
+ *
  * @return 0 on success, 1 on failure
 */
 int tokenizeFiles(dfile *file) {
@@ -385,7 +253,7 @@ int tokenizeFiles(dfile *file) {
     strcpy(temp, file->data);
 
     //Define the delimiter of the file. Our files were copied from the assignment document such
-	//that there is no newlines, the delimiter will always be space
+    //that there is no newlines, the delimiter will always be space
     const char sep[] = " ";
 
     //Use strtok out of the standard library to find the first word and check if it was found
@@ -397,20 +265,21 @@ int tokenizeFiles(dfile *file) {
     }
 
     //Declare an array of strings to hold the tokens and a size counter
-    char **retVal = NULL;
+    char **retVal = (char**)calloc(1, sizeof(char*));
     int size = 0;
 
-    //Loop through the tokens until a NULL token is found, indicating we have reached the end of the tokens
+    //strtok() returns a null pointer when it reaches the end of the string, so we can use this as a termination point
     while (token != NULL) {
         //Allocate space to retVal for the next token and check that the memory was allocated
+        //We can optimize this for time complexity, but our arrays are <200 elements so the improvement would not be noticeable
         retVal = (char **)realloc(retVal, sizeof(char *) * (size + 1));
         if (retVal == NULL) {
             perror("Failed to allocate memory for retVal");
             free(temp);
             return 1;
         }
-		//Allocate memory inside the newly created space in retVal to hold the token, check if memory was allocated properly
-        retVal[size] = (char *)malloc(strlen(token) + 1);
+        //Allocate memory inside the newly created space in retVal to hold the token, check if memory was allocated properly
+        retVal[size] = (char *)calloc(strlen(token) + 1, sizeof(char));
         if(retVal[size] == NULL){
             perror("Failed to allocate memory for retVal[size]");
             free(temp);
@@ -418,9 +287,9 @@ int tokenizeFiles(dfile *file) {
         }
         //Save the token to the array
         strcpy(retVal[size], token);
-		//Increment array size
+        //Increment array size
         size++;
-		//Find the next token by using strtok on a null pointer
+        //Find the next token by using strtok on a null pointer
         token = strtok(NULL, sep);
     }
     //NULL terminate the array
@@ -442,16 +311,109 @@ int tokenizeFiles(dfile *file) {
     return 0;
 }
 
-//Basic helper method since we don't store the lengths of our arrays since they change a significant number of times
-int arrayLen(char **array) {
-    int length = 0;
-
-    while (array[length] != NULL) {
-        length++;
+//function for removing special characters
+void removeSpecialChar(dfile *file)
+{
+    int i;
+    //looping through string
+    for (i = 0; file->data[i] != '\0'; ++i)
+    {
+        //Check if the current character in the string is alphabetical
+        if(!(file->data[i] >= 'a' && file->data[i] <= 'z') && !(file->data[i] >= 'A' && file->data[i] <= 'Z') &&
+           !(file->data[i] >= 'A' && file->data[i] <= 'Z') && !(file->data[i] == '\0') && !(file->data[i] == ' '))
+        {
+            //if the character is not alphabetical, replace it with a space
+            file->data[i] = ' ';
+        }
+        //This code functions the same as the above code, but is easier to read
+//        if(!isalpha((unsigned char)file->data[i]) && file->data[i] != ' ') {
+//            file->data[i] = ' ';
+//        }
     }
-    return length;
 }
 
+//Added arguments to the file we are removing words from and the pre-existing stopwords struct
+//so we do not duplicate processes or memory that we have already completed
+void removeStopWords(dfile *file, dfile *stopWords) {
+    int numDeleted = 0;
+    //Find the original length of our tokens
+    int len = arrayLen(file->tokens);
+    //Loop through every word in the tokens array
+    for(int i = 0; file->tokens[i] != NULL; i++) {
+        //Check if the current word matches a word in stopWords
+        for(int j = 0; stopWords->tokens[j] != NULL; j++) {
+            //Do the actual comparison with strcmp, a stdlib function which returns 0 if two strings are the same
+            if(strcmp(file->tokens[i], stopWords->tokens[j]) == 0) {
+                //When we have found a word in the d#.txt file and stopwords, perform an array deletion
+                wordDelete(file, i);
+                //Keep a record of how many words we deleted so we can resize the array later for memory optimization
+                numDeleted++;
+                //We deleted the word that we just checked, so move back by one so we can check the word that
+                //was shifted into the current position by wordDelete()
+                i--;
+                //Break out of the loop once we find a match since we do not need to check the rest of the stopwords
+                break;
+            }
+        }
+    }
+    //Resize the file tokens array for memory optimization using null pointers.
+    file->tokens = (char**)realloc(file->tokens, (len-numDeleted+1)*sizeof(char*));
+    if(file->tokens == NULL) {
+        perror("Failed to allocate memory");
+        return;
+    }
+    //NULL terminate the words/tokens array
+    file->tokens[len-numDeleted] = NULL;
+}
+
+void wordDelete(dfile *file, int index) {
+    //Find the length of the array before performing a deletion
+    int len = arrayLen(file->tokens);
+    //Make sure we are not trying to do something nonsensical
+    if(index >= len && index < 0) {
+        perror("Attempting to delete word out of bounds");
+        return;
+    }
+    //This is effectively the same algorithm that the professor used in lecture to delete
+    //elements from an array, except we are using a null pointer/dynamic allocated array instead of a normal
+    //"int arr[10];" style array. In reality, nothing changes. See chapter 11 (possibly 12) powerpoint and course material
+    for(int i = index; file->tokens[i] != NULL; i++) {
+        file->tokens[i] = file->tokens[i+1];
+    }
+}
+
+void alpha_sort(char **words) {
+    //Count the number of tokens in the array to provide as an argument for qsort
+    int count = arrayLen(words);
+    /*
+     * Use qsort from stdlib. Sorting was never covered in enough detail in class to sort ourselves, so we are lifting a
+     * section of code from chapter 4.10 of "The C Programming Language" Second Edition by Brian W. Kernighan and
+     * Dennis M. Ritchie and adapting it to sort an n-length array of strings instead of integers.
+     *
+     * We could have implemented quicksort or mergesort ourselves but such an algorithm is beyond the scope of this class
+     */
+    qsort(words, count, sizeof(*words), sortString);
+}
+
+/* Helper method for alpha_sort, this class also did not cover how to properly compare strings in detail so we are lifting
+ * more code from "The C Programming Language", this time from chapters 5.2 (dereferencing) and 5.6 (strcmp function)
+ */
+int sortString(const void *str1, const void *str2) {
+    //Dereference both strings, so we pass the actual strings to strcmp instead of pointers to the strings
+    const char *const *pp1 = str1;
+    const char *const *pp2 = str2;
+    /* Use strcmp, a stdlib function. This lexicographically compares the two dereferenced strings and gives a
+     * positive/negative/0 integer return value based on which string comes first alphabetically. We need to use this
+     * to differentiate between "analyze" and "artificial" (in D1.txt for example) without writing our own complicated,
+     * long, and horrible function to do the same comparison.
+     * */
+    return strcmp(*pp1, *pp2);
+}
+
+/**
+ * @brief Calculates the frequency and weight of each word in a file and outputs the results to a .csv file
+ * @param file
+ */
 void weightCalculator(dfile *file) {
     //Initialize some variables so we can find the word with the highest weight in the file,
     int highestCount = 0;
@@ -475,13 +437,14 @@ void weightCalculator(dfile *file) {
         }
     }
 
-    //Do some string manipulation to get the output file name without having to manually type them in.
+    //Do some string manipulation to get the output file name without having to manually set the file name somewhere.
     //Start by allocating memory and checking to make sure it succeeded
     char *outputFile = (char*)calloc(6, sizeof(char));
     if(outputFile == NULL) {
         perror("Failed to allocate memory for output file");
         return;
     }
+
     //Use a helper method to change the file extension from .txt to .csv using some string manipulation
     outputFile = changeFileExtension(file->fp, ".csv");
 
@@ -512,18 +475,27 @@ void weightCalculator(dfile *file) {
             currentWord = file->tokens[i];
         }
     }
-    //Close the file and tidy up memory
+    //Close the file and clean up memory
     fclose(fp);
     free(currentWord);
 }
 
 //Do some string manipulation to change the file extension from .txt to .csv, helper method for output file creation
 char* changeFileExtension(const char* inputFileName, const char* newExtension) {
-    // Find the position of the dot (.), determining where the file extension begins. We don't have
-    //to worry about multiple periods because any more than 1 is an invalid file extension
+    /* Find the position of the period, determining where the file extension begins. We won't be considering cases
+     * where there is more than one extension (i.e. file.txt.csv) because we have manually set the input file name
+     * which is being directly converted to the output file name, so we know that there will only be one extension. If
+     * the input file is not found then the program will stop long before now.
+     */
+
+    /*
+     * strrchr() is a stdlib function which returns a pointer to the last occurrence of a character in a string. In this
+     * case, we are looking for the last occurrence of '.' in the input file name, which will be the beginning of the
+     * file extension.
+     */
     char* dotPosition = strrchr(inputFileName, '.');
 
-    //Make sure a file extension exists
+    //Handle the case where a file extension is successfully found
     if (dotPosition != NULL) {
         // Calculate the length of the prefix, excluding the current extension
         size_t prefixLength = dotPosition - inputFileName;
@@ -534,7 +506,7 @@ char* changeFileExtension(const char* inputFileName, const char* newExtension) {
         // Allocate memory for the new string
         char* newFileName = (char*)calloc(newLength, sizeof(char));
 
-        // Copy the file name, before the extension begins
+        // Copy the file name, before the file extension begins
         strncpy(newFileName, inputFileName, prefixLength);
 
         // Append the new extension and the null terminator
@@ -543,20 +515,20 @@ char* changeFileExtension(const char* inputFileName, const char* newExtension) {
         return newFileName;
 
     } else {
-        // If no dot is found, append the new extension to the end of the original string
-        size_t inputLength = strlen(inputFileName);
-        size_t newLength = inputLength + strlen(newExtension) + 1;
-
-        // Allocate memory for the new string
-        char* newFileName = (char*)calloc(newLength, sizeof(char));
-
-        // Copy the original file name
-        strcpy(newFileName, inputFileName);
-
-        // Append the new extension and the null terminator
-        strcat(newFileName, newExtension);
-
-        return newFileName;
-
+        //Handle the error case where no file extension is found
+        perror("Failed to find file extension");
+        return NULL;
     }
+}
+
+// Basic helper method since we don't store the lengths of our arrays since we change it often and passing the length
+// as a pointer to keep track of it is annoying. The arrays are fairly short and we do not call this often,
+// meaning calculating the length of the array is trivial despite being inefficient
+int arrayLen(char **array) {
+    int length = 0;
+
+    while (array[length] != NULL) {
+        length++;
+    }
+    return length;
 }
